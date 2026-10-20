@@ -1,0 +1,13 @@
+# Python
+venv/
+__pycache__/
+*.pyc
+
+# Δεδομένα (τα ξαναφτιάχνουμε τρέχοντας τα scripts)
+data/raw/*
+!data/raw/.gitkeep
+data/*.db
+
+# macOS / editors
+.DS_Store
+.vscode/
