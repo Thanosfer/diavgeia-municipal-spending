@@ -21,7 +21,7 @@ RAW_DIR = "data/raw"
 
 MUNICIPALITIES = {
     "6243": "ΔΗΜΟΣ ΠΕΙΡΑΙΩΣ",
-    "6025": "ΔΗΜΟΣ ΑΜΑΡΟΥΣΙΟΥ",
+    "6026": "ΔΗΜΟΣ ΑΜΑΡΟΥΣΙΟΥ",
 }
 
 def get_page(org_id, month, page):
