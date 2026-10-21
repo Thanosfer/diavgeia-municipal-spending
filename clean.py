@@ -65,15 +65,15 @@ def main():
             afm = payee.get("afm")
             legal = is_legal_entity(afm)
 
-        expense_rows.append({
-            "ada": d["ada"],
-            "payee": payee.get("name", "").strip() if legal else "ΑΝΩΝΥΜΟΠΟΙΗΜΕΝΟ",
-            "afm": afm if legal else None,
-            "is_legal_entity": legal,
-            "amount": s["expenseAmount"]["amount"],
-            "kae": s.get("kae"),
-            "cpv": s.get("cpv"),
-        })
+            expense_rows.append({
+                "ada": d["ada"],
+                "payee": payee.get("name", "").strip() if legal else "ΑΝΩΝΥΜΟΠΟΙΗΜΕΝΟ",
+                "afm": afm if legal else None,
+                "is_legal_entity": legal,
+                "amount": s["expenseAmount"]["amount"],
+                "kae": s.get("kae"),
+                "cpv": s.get("cpv"),
+            })
 
     decisions = pd.DataFrame(decisions_rows)
     expenses = pd.DataFrame(expense_rows)
