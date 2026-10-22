@@ -15,11 +15,11 @@ def ask_category(subject):
     print()
     for number, category in enumerate(CATEGORIES, start=1):
         print(f"    {number:2d}. {category}")
-        while True:
-            answer = input("Κατηγορία (αριθμός): ").strip()
-            if answer.isdigit() and 1 <= int(answer) <= len(CATEGORIES):
-                return CATEGORIES[int(answer) - 1]
-            print("Δώσε έναν αριθμό από το 1 έως", len(CATEGORIES))
+    while True:
+        answer = input("Κατηγορία (αριθμός): ").strip()
+        if answer.isdigit() and 1 <= int(answer) <= len(CATEGORIES):
+            return CATEGORIES[int(answer) - 1]
+        print("Δώσε έναν αριθμό από το 1 έως", len(CATEGORIES))
 
 
 def main():

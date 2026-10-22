@@ -37,7 +37,7 @@ def main():
     decisions["kae_category"] = decisions["kae"].map(kae_category).fillna("(χωρίς αντιστοίχιση)")
 
     # 1η επιλογή: μία απόφαση για κάθε συνδυασμό Δήμου και κατηγορίας ΚΑΕ
-    per_category = decisions.drop_duplicates("subject")
+    per_category = decisions.groupby(["municipality", "kae_category"]).sample(n=1, random_state=SEED)
     # 2η επιλογή: από αυτές, 10 ανά Δήμο. Έτσι κάθε Δήμος έχει 10 διαφορετικά είδη.
     sample = per_category.groupby("municipality").sample(n=SAMPLE_SIZE // 2, random_state=SEED)
 
