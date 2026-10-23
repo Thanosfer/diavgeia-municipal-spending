@@ -3,6 +3,8 @@
 # Δείχνει ένα θέμα τη φορά και ζητάει τον αριθμό της κατηγορίας.
 # Σώζει μετά από κάθε απάντηση, οπότε μπορείς να σταματήσεις (Ctrl+C) και να συνεχίσεις.
 
+import sys
+
 import pandas as pd
 
 from categories import CATEGORIES
@@ -23,7 +25,9 @@ def ask_category(subject):
 
 
 def main():
-    sample = pd.read_csv(SAMPLE_PATH, encoding="utf-8-sig", dtype={"manual_category": str})
+    # Ποιο δείγμα: αυτό που δίνουμε στην εντολή, αλλιώς το 1ο
+    sample_path = sys.argv[1] if len(sys.argv) > 1 else SAMPLE_PATH
+    sample = pd.read_csv(sample_path, encoding="utf-8-sig", dtype={"manual_category": str})
 
     for i, row in sample.iterrows():
         if pd.notna(row["manual_category"]):
@@ -31,7 +35,7 @@ def main():
 
         print(f"\n--- {i + 1} / {len(sample)} · {row['municipality']} ---")
         sample.loc[i, "manual_category"] = ask_category(row["subject"])
-        sample.to_csv(SAMPLE_PATH, index=False, encoding="utf-8-sig") # σώζουμε αμέσως
+        sample.to_csv(sample_path, index=False, encoding="utf-8-sig") # σώζουμε αμέσως
 
     print("\nΤελείωσες! Κατανομή:")
     print(sample["manual_category"].value_counts().to_string())

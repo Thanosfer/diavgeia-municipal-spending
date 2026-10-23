@@ -1,6 +1,8 @@
 # compare_sample.py
 # Τρέχει το LLM στις 20 αποφάσεις του δείγματος και το συγκρίνει με τη δική μας κατηγορία.
 
+import sys
+
 import pandas as pd
 
 from classify import classify_subject
@@ -9,7 +11,9 @@ SAMPLE_PATH = "data/sample20.csv"
 
 
 def main():
-    sample = pd.read_csv(SAMPLE_PATH, encoding="utf-8-sig")
+    # Ποιο δείγμα: αυτό που δίνουμε στην εντολή, αλλιώς το 1ο
+    sample_path = sys.argv[1] if len(sys.argv) > 1 else SAMPLE_PATH
+    sample = pd.read_csv(sample_path, encoding="utf-8-sig")
 
     llm_categories = []
     for i, row in sample.iterrows():
