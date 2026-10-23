@@ -7,7 +7,7 @@ import json
 
 import requests
 
-from categories import CATEGORIES
+from categories import CATEGORIES, CATEGORY_DESCRIPTIONS
 
 OLLAMA_URL = "http://localhost:11434/api/chat"
 MODEL = "qwen2.5:7b"
@@ -31,7 +31,7 @@ PROMPT = """Είσαι βοηθός που κατηγοριοποιεί δαπά
 
 def classify_subject(subject):
     """Στέλνει ένα θέμα στο LLM και επιστρέφει την κατηγορία του."""
-    categories = "\n".join(f"- {category}" for category in CATEGORIES)
+    categories = "\n".join(f"- {category}: {CATEGORY_DESCRIPTIONS[category]}" for category in CATEGORIES)
     response = requests.post(OLLAMA_URL, json={
         "model": MODEL,
         "messages": [
