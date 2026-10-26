@@ -5,7 +5,8 @@
 
 # Θα το χρησιμοποιήσουν:
 # - το classify.py (η λίστα CATEGORIES μπαίνει στο prompt)
-# - ο έλεγχος του Βήματος 4 (η kae_category() δίνει την κατηγορία του ΚΑΕ)
+# - το evaluate.py (η kae_category δίνει τη κατηγορία του ΚΑΕ,
+#   η kae_accepted() τις κατηγορίες που μετράνε ως σωστές)
 
 import sqlite3
 
@@ -15,20 +16,41 @@ DB_PATH = "data/spending.db"
 
 # Για κάθε κατηγορία, οι αρχές των κωδικών που της αντιστοιχούν.
 # Π.χ. το "664" πιάνει το 6641, 6643 κ.λπ.
+# ΠΡΟΣΟΧΗ: η σειρά των κατηγοριών μπαίνει στο prompt (μέσω της CATEGORIES), οπότε δεν αλλάζει.
 CATEGORY_KAE = {
     "Μισθώματα": ["623"],
     "Ενέργεια, νερό και τηλεφωνία": ["621", "622", "6271", "6273"],
     "Καύσιμα": ["664"],
     # Το 6264 (επισκευή μηχανημάτων) είναι στον Πειραιά σχεδόν πάντα ο στόλος (ΔΠ, μηχανήματα έργου)
     "Οχήματα (ανταλλακτικά, ελαστικά, επισκευές)": ["6671", "6672", "6263", "6264"],
-    "Συντήρηση κτιρίων και εξοπλισμού": ["626", "666"],
-    "Υλικά και αναλώσιμα": ["661", "663", "669", "6673"],
+    "Συντήρηση κτιρίων και εξοπλισμού": ["626"],
+    # Το 666x είναι «υλικά συντήρησης» (6661 κτιρίων, 6662 οικοδομών, π.χ. ξυλεία, σκυρόδεμα).
+    # Αγοράζεται υλικό, άρα πάει στα Υλικά (στον χαλαρό έλεγχο δεχόμαστε και τη Συντήρηση, δες LENIENT_KAE).
+    "Υλικά και αναλώσιμα": ["661", "663", "666", "669", "6673"],
     "Τρόφιμα και παροχές εργαζομένων": ["606", "648"],
     "Υπηρεσίες τρίτων": ["61", "6279", "74", "6463", "6414"],
     "Εκδηλώσεις και προβολή": ["643", "647"],
     "Εξοπλισμός": ["71"],
     "Έργα": ["73"],
+    # Το 615x (αμοιβές για είσπραξη εσόδων: το 2% της ΔΕΗ για τα τέλη, τα ΕΛΤΑ για τα πρόστιμα) και
+    # το 616x (προμήθειες και έξοδα τραπεζών, π.χ. EFTPOS, 0,15% του ΤΠΔ) είναι κόστος για να μαζέψει
+    # ο Δήμος τα έσοδά του, όχι κάτι που αγόρασε. Συνήθως παρακρατούνται και πληρώνονται με
+    # τακτοποιητικό ένταλμα. Είναι μέσα στο "61" (υπηρεσίες), αλλά κερδίζει η μεγαλύτερη αρχή.
+    "Μη αγορές (δάνεια, φόροι, αποδόσεις, προσωπικό)": ["60", "63", "65", "67", "68", "642", "6492", "615", "616"],
+}
+
+# Η αντιστοίχιση πριν. Μένει μόνο για τη σύγκριση «πριν/μετά».
+OLD_CATEGORY_KAE = {
+    **CATEGORY_KAE,
+    "Συντήρηση κτιρίων και εξοπλισμού": ["626", "666"],
+    "Υλικά και αναλώσιμα": ["661", "663", "669", "6673"],
     "Μη αγορές (δάνεια, φόροι, αποδόσεις, προσωπικό)": ["60", "63", "65", "67", "68", "642", "6492"],
+}
+
+# Κωδικοί όπου στον χαλαρό έλεγχο δεχόμαστε και μια δεύτερη κατηγορία ως σωστή.
+# Το υλικό συντήρησης (666x) μπορεί λογικά να λεχθεί και «Συντήρηση».
+LENIENT_KAE = {
+    "666": "Συντήρηση κτιρίων και εξοπλισμού",
 }
 
 # Οι κατηγορίες που επιτρέπουμε στο LLM. Το "Άλλο" δεν αντιστοιχεί σε ΚΑΕ.
@@ -53,19 +75,35 @@ CATEGORY_DESCRIPTIONS = {
 }
 
 
-def kae_category(kae):
-    """Επιστρέφει την κατηγορία ενός ΚΑΕ, ή None αν δεν ταιριάζει σε καμία."""
+def kae_category(kae, mapping=CATEGORY_KAE):
+    """Επιστρέφει την κατηγορία ενός ΚΑΕ, ή None αν δεν ταιριάζει σε καμία.
+    Με mapping=OLD_CATEGORY_KAE δίνει την παλιά αντιστοίχιση."""
     code = kae[3:] # ό,τι υπάρχει μετά το "XX."
     # Αν ταιριάζουν δύο αρχές (π.χ. το "626" και το "6263"), κερδίζει η μεγαλύτερη,
     # γιατί είναι πιο συγκεκριμένη.
     best_category = None
     best_length = 0
-    for category, prefixes in CATEGORY_KAE.items():
+    for category, prefixes in mapping.items():
         for prefix in prefixes:
             if code.startswith(prefix) and len(prefix) > best_length:
                 best_category = category
                 best_length = len(prefix)
     return best_category
+
+
+def kae_accepted(kae, lenient=False):
+    """Οι κατηγορίες που μετράνε ως σωστές για έναν ΚΑΕ: αυστηρά μόνο μία, χαλαρά ίσως και δεύτερη.
+    Κενό σύνολο αν ο ΚΑΕ δεν ελέγχεται (δεν αντιστοιχεί σε κατηγορία)."""
+    category = kae_category(kae)
+    if category is None:
+        return set()
+    accepted = {category}
+    if lenient:
+        code = kae[3:]
+        for prefix, extra in LENIENT_KAE.items():
+            if code.startswith(prefix):
+                accepted.add(extra)
+    return accepted
 
 
 def main():
@@ -81,13 +119,23 @@ def main():
     """, conn)
     conn.close()
 
-    decision_kae["category"] = decision_kae["kae"].map(kae_category).fillna("(χωρίς αντιστοίχιση)")
-    summary = decision_kae.groupby("category").agg(
-        decisions=("ada", "count"),
-        million_eur=("total", "sum"),
-    )
-    summary["million_eur"] = (summary["million_eur"] / 1_000_000).round(2)
-    print(summary.sort_values("decisions", ascending=False).to_string())
+    # Η κατηγορία κάθε απόφασης με την παλιά και την νέα αντιστοίχιση, δίπλα δίπλα
+    no_match = "(χωρίς αντιστοίχιση)"
+    decision_kae["old"] = decision_kae["kae"].map(lambda kae: kae_category(kae, OLD_CATEGORY_KAE)).fillna(no_match)
+    decision_kae["new"] = decision_kae["kae"].map(kae_category).fillna(no_match)
+    summary = pd.DataFrame({
+        "old": decision_kae["old"].value_counts(),
+        "new": decision_kae["new"].value_counts(),
+        "million_eur": decision_kae.groupby("new")["total"].sum() / 1_000_000,
+    }).fillna(0)
+    summary["million_eur"] = summary["million_eur"].round(2)
+    print(summary.sort_values("new", ascending=False).to_string())
+    print()
+
+    # Ποιοι κωδικοί άλλαξαν κατηγορία
+    changed = decision_kae[decision_kae["old"] != decision_kae["new"]]
+    print("Αποφάσεις που άλλαξαν κατηγορία:")
+    print(changed.groupby(["old", "new"]).size().to_string())
     print()
     print("Σύνολο αποφάσεων:", len(decision_kae))
 
