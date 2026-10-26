@@ -129,7 +129,7 @@ def agreement_section(decisions):
 
     unchecked = decisions[~decisions["checked"]]
     return "\n\n".join([
-        "##Συμφωνία LLM–ΚΑΕ",
+        "## Συμφωνία LLM–ΚΑΕ",
         f"Παρονομαστής: μόνο οι αποφάσεις που ελέγχονται, {len(checked)} αποφάσεις "
         f"({checked['total'].sum() / 1e6:.2f} εκ. €).",
         as_table(table),
@@ -161,7 +161,7 @@ def confusion_section(decisions):
     scores["recall_%"] = (100 * scores["και_τα_δύο"] / scores["ΚΑΕ"]).round(1)
 
     return "\n\n".join([
-        "##Πίνακας σύγχυσης (νέα αντιστοίχιση, αυστηρή)",
+        "## Πίνακας σύγχυσης (νέα αντιστοίχιση, αυστηρή)",
         "Κάθε κελί: πόσες αποφάσεις έχουν αυτή την κατηγορία από το LLM (γραμμή) και αυτή από τον ΚΑΕ (στήλη). "
         "Η διαγώνιος είναι οι συμφωνίες.",
         as_table(matrix),
@@ -170,7 +170,7 @@ def confusion_section(decisions):
 
 
 def cpv_section(decisions):
-    """##Συμφωνία με το CPV, μόνο για τις αρχές του CPV_CATEGORY."""
+    """Συμφωνία με το CPV, μόνο για τις αρχές του CPV_CATEGORY."""
     with_cpv = decisions[decisions["cpv"].notna()].copy()
     with_cpv["prefix"] = with_cpv["cpv"].map(cpv_prefix)
     checked = with_cpv[with_cpv["prefix"].notna()].copy()
@@ -188,7 +188,7 @@ def cpv_section(decisions):
     }, index=list(CPV_CATEGORY)).fillna(0).astype({"αποφάσεις": int, "LLM_συμφωνεί": int, "ΚΑΕ_συμφωνεί": int})
 
     return "\n\n".join([
-        "##Συμφωνία με το CPV",
+        "## Συμφωνία με το CPV",
         f"Από τις {len(decisions)} αποφάσεις, {len(with_cpv)} έχουν CPV. Ελέγχονται οι {len(checked)} "
         f"με αρχή {', '.join(CPV_CATEGORY)}. Οι άλλες {len(with_cpv) - len(checked)} δεν ελέγχονται.",
         as_table(per_prefix),
