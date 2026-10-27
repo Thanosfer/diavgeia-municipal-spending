@@ -241,8 +241,8 @@ def top_equipment(conn):
 def possible_duplicates(conn):
     """Πιθανές διπλές αναρτήσεις στις αγορές: αποφάσεις με ίδια ημερομηνία, θέμα, ποσό και δικαιούχους
     (μόνο εταιρείες, γιατί τα ανωνυμοποιημένα ίδια ποσά είναι συνήθως διαφορετικά πρόσωπα).
-    Δεν τις αφαιρούμε, γιατί δεν είναι σίγουρο ότι είναι λάθη. Γυρίζει μόνο πλήθος και ευρώ."""
-    return conn.execute("""
+    Δεν τις αφαιρούμε, γιατί δεν είναι σίγουρο ότι είναι λάθη. Γυρίζει τα «επιπλέον αντίγραφα» (ada, ποσό)."""
+    return pd.read_sql("""
         WITH per_decision AS (
             SELECT p.ada, d.issue_date, d.subject, SUM(p.amount) AS amount,
                    GROUP_CONCAT(DISTINCT p.afm) AS afms
@@ -256,10 +256,10 @@ def possible_duplicates(conn):
             FROM per_decision
             WHERE afms IS NOT NULL
         )
-        SELECT COUNT(*), COALESCE(SUM(amount), 0)
+        SELECT ada, amount
         FROM numbered
         WHERE copy > 1
-    """).fetchone()
+    """, conn)
 
 
 def reliability():
@@ -280,7 +280,7 @@ def reliability():
     return pd.DataFrame({
         "precision_%": precision.round(1),
         "αξιοπιστία": precision.map(label),
-    }).rename(index=SHORT)
+    })
 
 
 def md_table(df, index=False):
@@ -308,14 +308,15 @@ def main():
     top10 = top_equipment(conn)
     wrong = top10[top10["ada"].isin(EQUIPMENT_WRONG)]
     equipment_total = categories.loc[categories["κατηγορία"] == "Εξοπλισμός", "ευρώ"].sum()
-    duplicates, duplicates_eur = possible_duplicates(conn)
+    duplicates = possible_duplicates(conn) 
+    duplicates_eur = duplicates["amount"].sum()
     purchases_total = buckets.loc[buckets["κουβάς"] == "Αγορές", "ευρώ"].sum()
     no_kae = transparency(conn)
     conn.close()
 
     sections = [
         "# Πού πάνε τα χρήματα των Δήμων (Πειραιάς και Μαρούσι, 2025)",
-        "Αποφάσεις Β.2.1 (οριστικοποίηση πληρωμής) από τη Διαύγεια. Η κατηγορία είναι η τελική"
+        "Αποφάσεις Β.2.1 (οριστικοποίηση πληρωμής) από τη Διαύγεια. Η κατηγορία είναι η τελική "
         "(ΚΑΕ όπου είναι σαφής, αλλιώς LLM). Οι γραμμές 82ΥΥ (κρατήσεις και επιστροφές) δεν μετράνε. "
         "Ποσά σε ευρώ.",
 
@@ -324,8 +325,8 @@ def main():
         md_table(buckets),
 
         "## 2. Κατηγορίες ανά Δήμο",
-        "Το ποσοστό είναι επί των αγορών του Δήμου. Η αξιοπιστία βγαίνει από την precision του LLM "
-        ": υψηλή ≥ 80%, μέτρια ≥ 50%, αλλιώς χαμηλή. Για Μισθώματα, Ενέργεια, Καύσιμα και Οχήματα "
+        "Το ποσοστό είναι επί των αγορών του Δήμου. Η αξιοπιστία βγαίνει από την precision του LLM: "
+        "υψηλή ≥ 80%, μέτρια ≥ 50%, αλλιώς χαμηλή. Για Μισθώματα, Ενέργεια, Καύσιμα και Οχήματα "
         "αποφασίζει κυρίως ο ΚΑΕ, οπότε εκεί η αξιοπιστία είναι μάλλον μεγαλύτερη από όση δείχνει η στήλη. "
         "Το «Άλλο» βγαίνει 0%, γιατί κανένας ΚΑΕ δεν αντιστοιχεί σε «Άλλο».",
         md_table(categories),
