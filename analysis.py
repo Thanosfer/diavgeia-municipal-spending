@@ -263,7 +263,7 @@ def possible_duplicates(conn):
 
 
 def reliability():
-    """Αξιοπιστία κάθε κατηγορίας από την precision του LLM(όπως στο evaluate.py):
+    """Αξιοπιστία κάθε κατηγορίας από την precision του LLM (όπως στο evaluate.py):
     από τις ελεγμένες αποφάσεις όπου το LLM είπε Χ, πόσες έχουν και ΚΑΕ Χ."""
     decisions = load_decisions()
     checked = decisions[decisions["checked"]]
@@ -308,7 +308,7 @@ def main():
     top10 = top_equipment(conn)
     wrong = top10[top10["ada"].isin(EQUIPMENT_WRONG)]
     equipment_total = categories.loc[categories["κατηγορία"] == "Εξοπλισμός", "ευρώ"].sum()
-    duplicates = possible_duplicates(conn) 
+    duplicates = possible_duplicates(conn)
     duplicates_eur = duplicates["amount"].sum()
     purchases_total = buckets.loc[buckets["κουβάς"] == "Αγορές", "ευρώ"].sum()
     no_kae = transparency(conn)
@@ -351,7 +351,7 @@ def main():
         "## 6. Διαφάνεια",
         "Αποφάσεις χωρίς κανέναν ΚΑΕ: δεν ξέρουμε τι πληρώθηκε. Το ποσοστό είναι επί όλων των ευρώ του Δήμου.",
         md_table(no_kae),
-        f"Πιθανές διπλές αναρτήσεις: {duplicates} αποφάσεις αγορών ({duplicates_eur / 1e6:.2f} εκ. €, το "
+        f"Πιθανές διπλές αναρτήσεις: {len(duplicates)} αποφάσεις αγορών ({duplicates_eur / 1e6:.2f} εκ. €, το "
         f"{100 * duplicates_eur / purchases_total:.1f}% των αγορών) έχουν ίδια ημερομηνία, θέμα, ποσό και "
         "δικαιούχο με μια άλλη απόφαση. Δεν τις αφαιρέσαμε, γιατί μπορεί να είναι και κανονικές επαναλήψεις.",
     ]
