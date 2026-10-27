@@ -302,7 +302,7 @@ def main():
 
     # Η αξιοπιστία μπαίνει δίπλα σε κάθε κατηγορία
     scores = reliability()
-    categories = categories.join(scores, on="κατηγορία")
+    categories = categories.join(scores.rename(index=SHORT), on="κατηγορία") # στον πίνακα τα ονόματα είναι σύντομα
 
     # Οι σημειώσεις: Εξοπλισμός και πιθανές διπλές αναρτήσεις
     top10 = top_equipment(conn)
