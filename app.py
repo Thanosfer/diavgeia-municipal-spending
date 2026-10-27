@@ -50,7 +50,8 @@ Full year 2025, both municipalities (filters do not apply here).
    Piraeus: equipment 23.0%, energy 13.0%, third-party services 10.8%. Equipment is unreliable:
    at least €5.5M of its €11.1M are services or transfers that were misclassified.
 5. **Concentration.** The largest supplier receives 11.2% of Marousi's purchases and 9.6% of
-   Piraeus' purchases. The Piraeus figure includes one possible duplicate of €1.13M.
+   Piraeus' purchases. The Piraeus figure includes one possible duplicate posting by the
+   municipality (€1.13M).
 6. **Year-end peak.** By decision date, December is the busiest month (€8.51M, 803 decisions)
    and January the quietest (€0.61M).
 7. **Possible duplicate postings.** 51 purchase decisions (€1.75M, 3.3%) repeat the date,
@@ -227,7 +228,8 @@ def notes_tab(purchases):
 def main():
     st.set_page_config(page_title="Municipal spending – Diavgeia", layout="wide")
     st.title("Where does the money go?")
-    st.caption("Spending of the Municipalities of Piraeus and Marousi in 2025, from Diavgeia.")
+    st.caption("Independent student project, not affiliated with Diavgeia or the municipalities. Categories "
+                "come partly from an automated classifier and may contain errors; always check the original decision.")
 
     purchases, reliability = load_data()
     selected, bought = filter_data(purchases)
