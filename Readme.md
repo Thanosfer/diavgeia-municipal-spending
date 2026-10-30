@@ -4,7 +4,7 @@ A student project that analyses the spending of two Greek municipalities using o
 
 **Live dashboard:** https://diavgeia-municipal-spending.streamlit.app
 
-[Dashboard overview](docs/overview.png)
+![Dashboard overview](docs/overview.png)
 
 ---
 
